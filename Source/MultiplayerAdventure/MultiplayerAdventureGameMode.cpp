@@ -13,3 +13,19 @@ AMultiplayerAdventureGameMode::AMultiplayerAdventureGameMode()
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
 }
+
+void AMultiplayerAdventureGameMode::HostLANGame(const FString& MapPath)
+{
+	if (UWorld* World = GetWorld())
+	{
+		World->ServerTravel(MapPath + "?listen");
+	}
+}
+
+void AMultiplayerAdventureGameMode::JoinLANGame(const FString& Address)
+{
+	if (APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController())
+	{
+		PlayerController->ClientTravel(Address, TRAVEL_Absolute);
+	}
+}

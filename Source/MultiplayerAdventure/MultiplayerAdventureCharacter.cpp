@@ -10,6 +10,9 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Engine/StaticMeshActor.h"
+#include "GameFramework/PlayerState.h"
+#include "Kismet/GameplayStatics.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -127,4 +130,77 @@ void AMultiplayerAdventureCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void AMultiplayerAdventureCharacter::ServerRPCReliable_Implementation(const int32 Argument)
+{
+	if (HasAuthority())
+	{
+		UWorld* World = GetWorld();
+		if (World && SpawnStaticMesh)
+		{
+			const FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * SpawnDistance + GetActorUpVector() * SpawnHeight;
+			if (AStaticMeshActor* MeshActor = World->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), SpawnLocation, FRotator::ZeroRotator))
+			{
+				MeshActor->SetOwner(this);
+				MeshActor->SetReplicates(true);
+				MeshActor->SetReplicateMovement(true);
+				MeshActor->SetMobility(EComponentMobility::Movable);
+				if (UStaticMeshComponent* MeshComponent = MeshActor->GetStaticMeshComponent())
+				{
+					MeshComponent->SetIsReplicated(true);
+					MeshComponent->SetSimulatePhysics(true);
+					MeshComponent->SetStaticMesh(SpawnStaticMesh);
+				}
+			}
+		}
+		
+#if 0
+		GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green, TEXT("Server:: ServerRPCReliable() called"));
+#endif
+	}
+}
+
+bool AMultiplayerAdventureCharacter::ServerRPCReliable_Validate(const int32 Argument)
+{
+	return Argument >= 0 && Argument <= 100;
+}
+
+void AMultiplayerAdventureCharacter::MulticastRPCReliable_Implementation()
+{
+	if (HasAuthority())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Server:: MulticastRPCReliable() called"));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Client %d:: MulticastRPCReliable() called"), GetPlayerState()->GetPlayerId()));
+	}
+	
+	// Check if the running instance is not a dedicated server. No need to spawn particles on a dedicated server
+	if (!IsRunningDedicatedServer())
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), VFX, GetActorLocation(), FRotator::ZeroRotator, true, EPSCPoolMethod::AutoRelease);
+	}
+
+	// Result of the NetMulticast function:
+	// Call on Server - Executed on sever and all connected clients
+	// Call on Client - Executed only on the client
+}
+
+void AMultiplayerAdventureCharacter::ClientRPCReliable_Implementation()
+{
+	if (HasAuthority())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Server:: ClientRPCReliable() called"));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Client %d:: ClientRPCReliable() called"), GetPlayerState()->GetPlayerId()));
+	}
+	
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), VFX, GetActorLocation(), FRotator::ZeroRotator, true, EPSCPoolMethod::AutoRelease);
+	// Result of the Client function:
+	// Call on Server - Executed only on the owning client
+	// Call on Client - Executed only on this client
 }

@@ -13,6 +13,12 @@ class AMultiplayerAdventureGameMode : public AGameModeBase
 
 public:
 	AMultiplayerAdventureGameMode();
+	
+	UFUNCTION(BlueprintCallable, Category = "Network")
+	void HostLANGame(const FString& MapPath);
+
+	UFUNCTION(BlueprintCallable, Category = "Network")
+	void JoinLANGame(const FString& Address);
 };
 
 

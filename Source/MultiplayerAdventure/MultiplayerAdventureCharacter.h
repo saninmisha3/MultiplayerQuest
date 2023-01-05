@@ -44,6 +44,18 @@ class AMultiplayerAdventureCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Spawn, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UStaticMesh> SpawnStaticMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Spawn, meta = (AllowPrivateAccess = "true"))
+	float SpawnDistance = 100.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Spawn, meta = (AllowPrivateAccess = "true"))
+	float SpawnHeight = 50.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Multicast, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UParticleSystem> VFX;
+
 public:
 	AMultiplayerAdventureCharacter();
 	
@@ -69,5 +81,14 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	
+	UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable)
+	void ServerRPCReliable(const int32 Argument);
+
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
+	void MulticastRPCReliable();
+
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void ClientRPCReliable();
 };
 
