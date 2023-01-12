@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "OnlineSubsystem.h"
+#include "OnlineSessionSettings.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "MultiplayerSessionSubsystem.generated.h"
 
@@ -19,6 +19,20 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
+	///////////////////////////////
+	// Server API
+	///////////////////////////////
+	UFUNCTION(BlueprintCallable)
+	void CreateServer(const FString& ServerName);
+
+	UFUNCTION(BlueprintCallable)
+	void JoinServer(const FString& ServerName);
+
 private:
-	void PrintString(const FString& Message);
+	void PrintString(const FString& Message) const;
+
+	///////////////////////////////
+	// Session Interface Delegate Handles
+	///////////////////////////////
+	void HandleOnCreateSessionComplete(const FName SessionName, const bool bWasSuccessful);
 };
