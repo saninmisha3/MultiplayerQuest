@@ -30,9 +30,17 @@ void UMultiplayerSessionSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-void UMultiplayerSessionSubsystem::CreateServer(const FString& ServerName)
+void UMultiplayerSessionSubsystem::CreateServer(const FString& ServerName, const FString& InTravelMapPath)
 {
 	PrintString("Creating Server ...");
+
+	if (InTravelMapPath.IsEmpty())
+	{
+		PrintString("Travel Map is empty!", true);
+		OnServerCreateCompleted.Broadcast(false);
+		return;
+	}
+	TravelMapPath = InTravelMapPath;
 	
 	if (ServerName.IsEmpty())
 	{
@@ -96,8 +104,7 @@ void UMultiplayerSessionSubsystem::HandleOnCreateSessionComplete(const FName Ses
 	{
 		if (UWorld* World = GetWorld())
 		{
-			const FString MapPath = "/Game/ThirdPerson/Maps/ThirdPersonMap";
-			World->ServerTravel(MapPath + "?listen");
+			World->ServerTravel(TravelMapPath + "?listen");
 		}
 	}
 
@@ -111,7 +118,7 @@ void UMultiplayerSessionSubsystem::HandleOnDestroySessionComplete(const FName Se
 	// Recreate a server if this delegate was called when we were trying to create an existing session
 	if (bRecreateServer)
 	{
-		CreateServer(RecreateServerName);
+		CreateServer(RecreateServerName, TravelMapPath);
 		RecreateServerName = FString();
 		bRecreateServer = false;
 	}

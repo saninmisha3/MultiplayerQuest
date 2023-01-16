@@ -25,6 +25,8 @@ public:
 protected:
 	IOnlineSessionPtr SessionInterface;
 	
+	FString TravelMapPath = FString();
+	
 private:
 	bool bRecreateServer = false;
 	FString RecreateServerName;
@@ -42,7 +44,7 @@ public:
 	// Server API
 	///////////////////////////////
 	UFUNCTION(BlueprintCallable)
-	void CreateServer(const FString& ServerName);
+	void CreateServer(const FString& ServerName, const FString& InTravelMapPath);
 
 	UFUNCTION(BlueprintCallable)
 	void JoinServer(const FString& ServerName);
