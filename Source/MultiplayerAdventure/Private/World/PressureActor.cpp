@@ -1,7 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "World/PressureActor.h"
+#include "GameFramework/Character.h"
 #include "Components/SphereComponent.h"
+#include "Components/TransporterComponent.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogPressedActor, Log, All);
 
@@ -21,14 +23,34 @@ APressureActor::APressureActor()
 	SphereCollision->OnComponentBeginOverlap.AddUniqueDynamic(this, &APressureActor::HandleOnSphereCollisionBeginOverlap);
 	SphereCollision->OnComponentEndOverlap.AddUniqueDynamic(this, &APressureActor::HandleOnSphereCollisionEndOverlap);
 	SphereCollision->SetupAttachment(GetRootComponent());
+
+	TransporterComponent = CreateDefaultSubobject<UTransporterComponent>(TEXT("TransporterComponent"));
+}
+
+void APressureActor::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (TransporterComponent)
+	{
+		TransporterComponent->SetPoints(GetActorLocation(), GetActorLocation() + TriggerOffset);
+	}
 }
 
 void APressureActor::HandleOnSphereCollisionBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogPressedActor, Display, TEXT("[%s] Activated by %s"), *GetNameSafe(this), *GetNameSafe(OtherActor));
+	if (!bIsActivated && OtherActor->IsA<ACharacter>())
+	{
+		bIsActivated = true;
+		OnActivationStateChanged.Broadcast(bIsActivated);
+	}
 }
 
 void APressureActor::HandleOnSphereCollisionEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	UE_LOG(LogPressedActor, Display, TEXT("[%s] Deactivated by %s"), *GetNameSafe(this), *GetNameSafe(OtherActor));
+	if (bIsActivated && OtherActor->IsA<ACharacter>())
+	{
+		bIsActivated = false;
+		OnActivationStateChanged.Broadcast(bIsActivated);
+	}
 }
